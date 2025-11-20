@@ -39,35 +39,29 @@ const App: React.FC = () => {
   const handleStartClick = () => {
     const audio = audioRef.current;
     
-    // We update the state first, which makes the Start Screen disappear
-    setGameState(GameState.PLAYING);
-    
-    // --- START AUDIO LOGIC ---
+    // --- START AUDIO LOGIC FIRST (Reversed Order) ---
     if (audio) {
         // 🚨 DEBUG: Log the status to the console
-        console.log("Audio Element Status (Found):", {
+        console.log("Audio Status (Attempting Play):", {
             src: audio.src,
-            readyState: audio.readyState, // 4 means fully loaded
-            error: audio.error,           // Check for any loading error object
+            readyState: audio.readyState, 
             paused: audio.paused
         });
 
         audio.loop = true;
         audio.volume = 0.5;
         
-        // Final security check: ensure the audio element is ready before playing
-        if (audio.readyState < 3) { 
-            audio.load();
-        }
-        
         audio.play().catch(e => {
-            console.error("Audio Playback Blocked by Browser (Promise Rejection):", e);
+            console.error("Audio Playback Blocked (Promise Rejection):", e);
         }); 
     } else {
-        // 🚨 CRITICAL: If audioRef.current is null, this will now execute and tell us!
-        console.error("Audio Playback Failed: audioRef is null. Element not mounted or found.");
+        // Log if the element itself is missing
+        console.error("Audio Playback Failed: audioRef is null.");
     }
     // --- END AUDIO LOGIC ---
+
+    // 4. Set state LAST (This is the crucial change for timing)
+    setGameState(GameState.PLAYING);
   };
 
 
