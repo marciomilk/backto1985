@@ -42,29 +42,32 @@ const App: React.FC = () => {
     // We update the state first, which makes the Start Screen disappear
     setGameState(GameState.PLAYING);
     
-    // Then, we play the audio directly on the user click
+    // --- START AUDIO LOGIC ---
     if (audio) {
-        audio.loop = true;
-        audio.volume = 0.5;
-        
         // 🚨 DEBUG: Log the status to the console
-        console.log("Audio Element Status:", {
+        console.log("Audio Element Status (Found):", {
             src: audio.src,
             readyState: audio.readyState, // 4 means fully loaded
             error: audio.error,           // Check for any loading error object
             paused: audio.paused
         });
+
+        audio.loop = true;
+        audio.volume = 0.5;
         
         // Final security check: ensure the audio element is ready before playing
-        if (audio.readyState < 3) { // 3 means enough data is loaded to play
+        if (audio.readyState < 3) { 
             audio.load();
         }
         
         audio.play().catch(e => {
-            // This catches the most common browser error (security policy blocking play())
-            console.error("Audio Playback Blocked by Browser (Play Promise Rejection):", e);
+            console.error("Audio Playback Blocked by Browser (Promise Rejection):", e);
         }); 
+    } else {
+        // 🚨 CRITICAL: If audioRef.current is null, this will now execute and tell us!
+        console.error("Audio Playback Failed: audioRef is null. Element not mounted or found.");
     }
+    // --- END AUDIO LOGIC ---
   };
 
 
