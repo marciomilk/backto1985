@@ -1,5 +1,12 @@
-import React, { useState, useEffect } from 'react'; // Added useEffect for sound cleanup
-import useSound from 'use-sound'; // Library for sound playback
+import React, { useState, useEffect } from 'react'; 
+import useSound from 'use-sound'; 
+
+// ----------------------------------------------------
+// 🚨 FIX 1: REPLACED THE FILE IMPORT WITH A URL STRING 🚨
+// This absolute path (including your repository name 'backto1985') is required 
+// to prevent the 404 (Not Found) error on GitHub Pages.
+const themeSongUrl = '/backto1985/game-theme.mp3'; 
+// ----------------------------------------------------
 
 // Assuming these paths are correct for your local setup
 import GameCanvas from './components/GameCanvas';
@@ -7,16 +14,13 @@ import { Speedometer } from './components/Speedometer';
 import DocRadio from './components/DocRadio';
 import { GameState } from './types';
 
-// IMPORTANT: Path to the MP3 file in your 'public' folder
-// Make sure your file is named exactly 'game-theme.mp3'
-import themeSong from '/game-theme.mp3'; 
-
 const App: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>(GameState.START);
   const [currentSpeed, setCurrentSpeed] = useState(0);
 
-  // 1. Initialize the sound hook
-  const [playTheme, { stop }] = useSound(themeSong, { 
+  // 2. Initialize the sound hook, using the fixed URL string
+  // NOTE: We now use 'themeSongUrl' instead of the old 'themeSong'
+  const [playTheme, { stop }] = useSound(themeSongUrl, { 
     loop: true,       // Makes the music repeat continuously
     volume: 0.5       // Sets the volume to 50%
   });
