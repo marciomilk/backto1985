@@ -1,55 +1,68 @@
-import React, { useState, useEffect } from 'react'; 
-import useSound from 'use-sound'; 
-
-// ----------------------------------------------------
-// 🚨 FIX 1: REPLACED THE FILE IMPORT WITH A URL STRING 🚨
-// This absolute path (including your repository name 'backto1985') is required 
-// to prevent the 404 (Not Found) error on GitHub Pages.
+import React, { useState, useEffect, useRef } from 'react'; 
+// NOTE: We no longer import 'useSound'
+// The file path includes your repository name to prevent the 404 error on GitHub Pages.
 const themeSongUrl = '/backto1985/game-theme.mp3'; 
-// ----------------------------------------------------
 
 // Assuming these paths are correct for your local setup
 import GameCanvas from './components/GameCanvas';
 import { Speedometer } from './components/Speedometer';
 import DocRadio from './components/DocRadio';
-import { GameState } from './types';
+// IMPORTANT: Make sure your GameState import path is correct if it's not in './types'
+import { GameState } from './types'; 
 
 const App: React.FC = () => {
   const [gameState, setGameState] = useState<GameState>(GameState.START);
   const [currentSpeed, setCurrentSpeed] = useState(0);
 
-  // 2. Initialize the sound hook, using the fixed URL string
-  // NOTE: We now use 'themeSongUrl' instead of the old 'themeSong'
-  const [playTheme, { stop }] = useSound(themeSongUrl, { 
-    loop: true,       // Makes the music repeat continuously
-    volume: 0.5       // Sets the volume to 50%
-  });
+  // 1. Create a reference to the hidden HTML <audio> element
+  const audioRef = useRef<HTMLAudioElement>(null); 
 
-  // 2. Wrap your original start function to also play music
-  const handleGameStart = () => {
-    // This is the original line that starts the game
-    setGameState(GameState.PLAYING); 
-    // This starts the music, resolving the browser autoplay policy
-    playTheme();          
+  // Helper function to stop the music (used on crash/win)
+  const stopAudio = () => {
+    const audio = audioRef.current;
+    if (audio) {
+        audio.pause();
+        audio.currentTime = 0; // Rewind the song
+    }
+  };
+
+  // 2. Combined state change handler for Start, Crash, and Win buttons
+  const handleGameStateChange = (newState: GameState) => {
+    // If we are leaving the playing state (e.g., crashing or winning), stop music
+    if (newState !== GameState.PLAYING) {
+        stopAudio();
+    }
+    setGameState(newState);
   };
   
-  // 3. Cleanup: Stop music when the app unmounts (good practice)
-  useEffect(() => {
-    return () => {
-      stop();
-    };
-  }, [stop]);
+  // 3. CRITICAL: Handles the 'Start' button click to initiate music and game
+  const handleStartClick = () => {
+    const audio = audioRef.current;
+    
+    // We update the state first, which makes the Start Screen disappear
+    setGameState(GameState.PLAYING);
+    
+    // Then, we play the audio directly on the user click
+    if (audio) {
+        audio.loop = true;
+        audio.volume = 0.5;
+        
+        // This is the final security check: try to play and catch any errors 
+        audio.play().catch(e => {
+            console.error("Audio Playback Blocked by Browser:", e);
+            // The browser is blocking it if it fails here. The code itself is correct.
+        }); 
+    }
+  };
 
-  // 4. Update the game state functions to also stop/start music on state change
-  const handleTryAgain = () => {
-      // Stop the music just in case (e.g., if you only want it playing during the game, not the start screen)
-      stop();
-      setGameState(GameState.START);
-  }
 
   return (
     <div className="min-h-screen bg-[#1a1a1a] flex flex-col items-center justify-center p-4 relative overflow-hidden font-[ 'Press_Start_2P']">
       
+      {/* 4. NATIVE AUDIO ELEMENT (Hidden) - The player for the music */}
+      {/* The src uses the fixed themeSongUrl, the ref connects it to our code */}
+      <audio ref={audioRef} src={themeSongUrl} preload="auto" />
+
       {/* Background Pattern */}
       <div className="absolute inset-0 pointer-events-none opacity-20" style={{ 
           backgroundImage: 'linear-gradient(45deg, #000 25%, transparent 25%), linear-gradient(-45deg, #000 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #000 75%), linear-gradient(-45deg, transparent 75%, #000 75%)',
@@ -89,10 +102,10 @@ const App: React.FC = () => {
                         <p>2. DODGE OBSTACLES (<span className="text-[#ff0044]">ARROWS</span>)</p>
                         <p>3. REACH <span className="text-[#ffff00]">88 MPH</span> BEFORE THE WIRE</p>
                     </div>
-                    {/* Updated the onClick handler to the new function */}
+                    {/* The onClick now uses the handleStartClick function */}
                     <button 
                         className="px-6 py-3 bg-[#0044cc] text-white text-xs border-4 border-white hover:bg-[#0066ff] active:translate-y-1 font-['Press_Start_2P'] w-full"
-                        onClick={handleGameStart}
+                        onClick={handleStartClick}
                     >
                         INSERT COIN / START
                     </button>
@@ -109,10 +122,10 @@ const App: React.FC = () => {
                         <p className="mb-2">IMPACT SPEED:</p>
                         <p className="text-xl text-yellow-400">{currentSpeed.toFixed(1)} MPH</p>
                     </div>
-                    {/* Updated the onClick handler to the new function */}
+                    {/* Updated the onClick handler */}
                     <button 
                         className="px-6 py-3 bg-red-600 text-white text-xs border-4 border-white hover:bg-red-500 font-['Press_Start_2P'] w-full"
-                        onClick={handleTryAgain}
+                        onClick={() => handleGameStateChange(GameState.START)}
                     >
                         TRY AGAIN
                     </button>
@@ -133,7 +146,7 @@ const App: React.FC = () => {
                     </div>
                     <button 
                         className="px-6 py-3 bg-black text-white text-xs border-4 border-white hover:bg-gray-800 font-['Press_Start_2P'] w-full"
-                        onClick={handleTryAgain}
+                        onClick={() => handleGameStateChange(GameState.START)}
                     >
                         REBOOT SYSTEM
                     </button>
