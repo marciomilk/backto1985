@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'; 
-// NOTE: We no longer import 'useSound'
+// NOTE: We have removed 'useSound' and are using native HTML audio elements.
 // The file path includes your repository name to prevent the 404 error on GitHub Pages.
 const themeSongUrl = '/backto1985/game-theme.mp3'; 
 
@@ -47,10 +47,22 @@ const App: React.FC = () => {
         audio.loop = true;
         audio.volume = 0.5;
         
-        // This is the final security check: try to play and catch any errors 
+        // 🚨 DEBUG: Log the status to the console
+        console.log("Audio Element Status:", {
+            src: audio.src,
+            readyState: audio.readyState, // 4 means fully loaded
+            error: audio.error,           // Check for any loading error object
+            paused: audio.paused
+        });
+        
+        // Final security check: ensure the audio element is ready before playing
+        if (audio.readyState < 3) { // 3 means enough data is loaded to play
+            audio.load();
+        }
+        
         audio.play().catch(e => {
-            console.error("Audio Playback Blocked by Browser:", e);
-            // The browser is blocking it if it fails here. The code itself is correct.
+            // This catches the most common browser error (security policy blocking play())
+            console.error("Audio Playback Blocked by Browser (Play Promise Rejection):", e);
         }); 
     }
   };
@@ -60,7 +72,6 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-[#1a1a1a] flex flex-col items-center justify-center p-4 relative overflow-hidden font-[ 'Press_Start_2P']">
       
       {/* 4. NATIVE AUDIO ELEMENT (Hidden) - The player for the music */}
-      {/* The src uses the fixed themeSongUrl, the ref connects it to our code */}
       <audio ref={audioRef} src={themeSongUrl} preload="auto" />
 
       {/* Background Pattern */}
@@ -83,7 +94,7 @@ const App: React.FC = () => {
 
         <GameCanvas 
             gameState={gameState} 
-            setGameState={setGameState} 
+            setGameState={handleGameStateChange} // Use the custom handler
             onSpeedChange={setCurrentSpeed}
         />
 
