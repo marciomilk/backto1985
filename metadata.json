@@ -1,0 +1,5 @@
+{
+  "name": "88 MPH: Time Travel Run",
+  "description": "A top-down arcade game inspired by Back to the Future. Accelerate the DeLorean to 88 MPH, avoid obstacles, and hit the lightning cable to time travel!",
+  "requestFramePermissions": []
+}
